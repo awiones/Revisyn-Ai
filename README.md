@@ -1,3 +1,13 @@
+<p align="center">
+  <img src="images/logo.png" alt="Revisyn-AI Logo" width="180" />
+</p>
+<p align="center">
+  <a href="https://github.com/awiones/Revisyn-Ai"><img src="https://img.shields.io/github/stars/awiones/Revisyn-Ai?style=flat-square" alt="GitHub stars"></a>
+  <a href="https://github.com/awiones/Revisyn-Ai"><img src="https://img.shields.io/github/forks/awiones/Revisyn-Ai?style=flat-square" alt="GitHub forks"></a>
+  <a href="https://github.com/awiones/Revisyn-Ai/blob/main/LICENSE"><img src="https://img.shields.io/github/license/awiones/Revisyn-Ai?style=flat-square" alt="License"></a>
+  <img src="https://img.shields.io/badge/status-beta-yellow?style=flat-square" alt="Beta Status">
+</p>
+
 # Revisyn-AI
 
 **Revisyn-AI** is an intelligent cybersecurity scanner powered by AI, currently in early beta. It aims to help security professionals and developers identify, analyze, and remediate web vulnerabilities with the assistance of advanced AI models.
