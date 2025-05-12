@@ -1,0 +1,10 @@
+requests
+colorama
+beautifulsoup4
+azure-ai-inference
+dnspython
+python-whois
+pyyaml
+python-dotenv
+openai
+tqdm
