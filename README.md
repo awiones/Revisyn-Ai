@@ -1,10 +1,14 @@
 <p align="center">
-  <img src="images/logo.png" alt="Revisyn-AI Logo" width="180" />
+  <img src="images/logo.png" alt="Revisyn-AI Logo" width="250" />
 </p>
+
+<h1 align="center">Revisyn-AI</h1>
+<h3 align="center">AI-Powered Analysis Scanner</h3>
+
 <p align="center">
   <a href="https://github.com/awiones/Revisyn-Ai"><img src="https://img.shields.io/github/stars/awiones/Revisyn-Ai?style=flat-square" alt="GitHub stars"></a>
   <a href="https://github.com/awiones/Revisyn-Ai"><img src="https://img.shields.io/github/forks/awiones/Revisyn-Ai?style=flat-square" alt="GitHub forks"></a>
-  <a href="https://github.com/awiones/Revisyn-Ai/blob/main/LICENSE"><img src="https://img.shields.io/github/license/awiones-Revisyn-Ai?style=flat-square" alt="License"></a>
+  <a href="https://github.com/awiones/Revisyn-Ai/blob/main/LICENSE"><img src="https://img.shields.io/github/license/awiones/Revisyn-Ai?style=flat-square" alt="License"></a>
   <img src="https://img.shields.io/badge/status-beta-yellow?style=flat-square" alt="Beta Status">
 </p>
 
