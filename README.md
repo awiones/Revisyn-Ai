@@ -65,11 +65,12 @@
 
 You can specify which vulnerabilities to scan for by providing a comma-separated list using the `-v` or `--vuln-types` parameter. Supported types are listed below:
 
-| Type | Description          |
-| ---- | -------------------- |
-| xss  | Cross-Site Scripting |
-| sqli | SQL Injection        |
-| lfi  | Local File Inclusion |
+| Type        | Description                                      |
+| ----------- | ------------------------------------------------ |
+| xss         | Cross-Site Scripting                             |
+| sqli        | SQL Injection                                    |
+| lfi         | Local File Inclusion                             |
+| web_content | Web-Content Discovery (hidden files/directories) |
 
 **Example:**
 
