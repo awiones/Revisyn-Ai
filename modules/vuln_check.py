@@ -1,6 +1,3 @@
-# modules/vuln_check.py
-# Module for checking common web vulnerabilities
-
 import requests
 import re
 import json

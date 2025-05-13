@@ -1,3 +1,4 @@
+from modules.auth import handle_auth_arg, print_auth_instructions
 import os
 import sys
 import argparse
@@ -8,11 +9,32 @@ from colorama import init, Fore, Style
 from dotenv import load_dotenv
 import urllib3
 
-# Import custom modules
 from modules.ai_engine import AIEngine
 from modules.scanner import Scanner
 from modules.utils import banner, validate_url, format_output, progress_bar, URLScanTracker
 from modules.vuln_check import VulnerabilityChecker
+
+# Call handle_auth_arg() first to allow --auth to work before .env check
+handle_auth_arg()
+
+# --- Early check for .env and GITHUB_TOKEN ---
+if not os.path.exists('.env'):
+    # Create an empty .env file
+    with open('.env', 'w') as f:
+        f.write('GITHUB_TOKEN=\n')
+    print_auth_instructions()
+    exit(1)
+else:
+    # Check if GITHUB_TOKEN is present and non-empty in .env
+    with open('.env', 'r') as f:
+        lines = f.readlines()
+    token_line = [line for line in lines if line.strip().startswith('GITHUB_TOKEN=')]
+    token = ''
+    if token_line:
+        token = token_line[0].strip().split('=', 1)[-1]
+    if not token:
+        print_auth_instructions()
+        exit(1)
 
 # Load environment variables from .env file if present
 load_dotenv()
@@ -93,6 +115,20 @@ class RevisynAI:
             }
             format_output(scan_results, output_format)
             return scan_results
+        if vuln_types and len(vuln_types) == 1 and vuln_types[0].lower() == "web_content":
+            print(f"{Fore.BLUE}[*] Discovering Web Content (directories/files)...{Style.RESET_ALL}")
+            web_content_results = self.scanner.discover_web_content(url, scan_level)
+            print(f"{Fore.BLUE}[*] Performing AI-enhanced analysis for Web Content Discovery...{Style.RESET_ALL}")
+            ai_analysis = self.ai_engine.analyze_scan_results(url, recon_data, {"web_content": web_content_results})
+            scan_results = {
+                "url": url,
+                "scan_time": self.scanner.get_timestamp(),
+                "recon_data": recon_data,
+                "vulnerabilities": {"web_content": web_content_results},
+                "ai_analysis": ai_analysis
+            }
+            format_output(scan_results, output_format)
+            return scan_results
         # Otherwise, do normal scan
         print(f"{Fore.BLUE}[*] Scanning for common vulnerabilities...{Style.RESET_ALL}")
         vuln_results = self.vuln_checker.scan_common_vulns(url, scan_level, vuln_types)
@@ -152,11 +188,6 @@ def main():
     parser.add_argument("-i", "--interactive", action="store_true", help="Run in interactive mode")
     parser.add_argument("-v", "--vuln-types", help="Comma-separated list of vulnerability types to scan for (e.g. xss,sqli,lfi)")
     args = parser.parse_args()
-    # Check if GITHUB_TOKEN is set
-    if "GITHUB_TOKEN" not in os.environ:
-        print(f"{Fore.RED}[!] Error: GITHUB_TOKEN environment variable is not set.")
-        print(f"{Fore.YELLOW}Set it with: export GITHUB_TOKEN=your_token{Style.RESET_ALL}")
-        sys.exit(1)
     vuln_types = [v.strip() for v in args.vuln_types.split(",")] if args.vuln_types else None
     revisyn_ai = RevisynAI()
     if args.interactive:

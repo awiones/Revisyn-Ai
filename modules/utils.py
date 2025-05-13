@@ -29,7 +29,7 @@ def banner():
                                           Intelligent Security Scanner
     """
     print(f"{Fore.CYAN}{banner_text}{Style.RESET_ALL}")
-    print(f"{Fore.YELLOW}Version: Beta 0.0.1{Style.RESET_ALL}")
+    print(f"{Fore.YELLOW}Version: Beta 0.0.2{Style.RESET_ALL}")
     print(f"{Fore.YELLOW}https://github.com/revisyn-ai/revisyn-ai{Style.RESET_ALL}")
     print("")
     print(f"{Fore.GREEN}[*] {platform.system()} {platform.release()} ({platform.machine()}){Style.RESET_ALL}")

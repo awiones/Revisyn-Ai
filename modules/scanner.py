@@ -1,6 +1,3 @@
-# modules/scanner.py
-# Core scanner functionality for initial reconnaissance
-
 import requests
 import socket
 import ssl
@@ -12,6 +9,8 @@ from colorama import Fore, Style
 import re
 import dns.resolver
 import whois
+import time
+import os
 
 class Scanner:
     def __init__(self):
@@ -332,4 +331,151 @@ class Scanner:
         
         return endpoints
 
-import time  # Required for the SSL certificate expiration check
+    def discover_web_content(self, url, level='standard', timeout=1):
+        """
+        Discover hidden directories and files using wordlist-based scanning
+        
+        Args:
+            url (str): Target URL to scan
+            level (str): Scanning depth - 'basic' (1000 entries), 'standard' (2500 entries), or 'deep' (all entries)
+            timeout (int): Timeout for each request in seconds
+            
+        Returns:
+            dict: Results of the web content discovery scan
+        """
+        # Parse the URL
+        parsed_url = urlparse(url)
+        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        
+        # Set scan depth based on level
+        if level == 'basic':
+            max_entries = 1000
+            print(f"{Fore.CYAN}[*] Starting basic web content discovery (1000 entries)...{Style.RESET_ALL}")
+        elif level == 'standard':
+            max_entries = 2500
+            print(f"{Fore.CYAN}[*] Starting standard web content discovery (2500 entries)...{Style.RESET_ALL}")
+        elif level == 'deep':
+            max_entries = float('inf')  # No limit
+            print(f"{Fore.CYAN}[*] Starting deep web content discovery (all entries)...{Style.RESET_ALL}")
+        else:
+            max_entries = 2500  # Default to standard
+            print(f"{Fore.YELLOW}[!] Invalid level specified, defaulting to standard (2500 entries){Style.RESET_ALL}")
+        
+        # Path to wordlist file
+        wordlist_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
+                                    "modules", "seclists", "Discovery", "Web-Content", "directory-list-2.3-big.txt")
+        
+        # Initialize results container
+        results = {
+            "target_url": url,
+            "scan_level": level,
+            "discovered_paths": [],
+            "stats": {
+                "total_requests": 0,
+                "successful_responses": 0,
+                "client_errors": 0,
+                "server_errors": 0,
+                "redirects": 0
+            }
+        }
+        
+        # Check if wordlist file exists
+        if not os.path.exists(wordlist_path):
+            print(f"{Fore.RED}[!] Wordlist file not found: {wordlist_path}{Style.RESET_ALL}")
+            results["error"] = f"Wordlist file not found: {wordlist_path}"
+            return results
+        
+        try:
+            # Use requests session for better performance
+            session = requests.Session()
+            session.headers = self.headers
+            
+            # Prepare progress tracking variables
+            line_count = 0
+            start_time = time.time()
+            
+            # Filter out comment lines and read the wordlist
+            with open(wordlist_path, 'r', encoding='utf-8', errors='ignore') as f:
+                wordlist = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+            # Truncate wordlist based on selected level
+            if max_entries != float('inf'):
+                wordlist = wordlist[:max_entries]
+            # Display total entries to be scanned
+            total_entries = len(wordlist)
+            print(f"{Fore.CYAN}[*] Loaded {total_entries} entries from wordlist{Style.RESET_ALL}")
+
+            # --- Progress bar animation setup ---
+            from modules.utils import URLScanTracker
+            tracker = URLScanTracker(total_entries, prefix='Web Content Progress', length=40)
+            # ------------------------------------
+
+            # Iterate through the wordlist
+            for entry in wordlist:
+                line_count += 1
+                # Construct target URL
+                target_path = f"{base_url}/{entry}"
+                try:
+                    response = session.get(target_path, timeout=timeout, allow_redirects=False, verify=False)
+                    results["stats"]["total_requests"] += 1
+                    status_code = response.status_code
+                    # Update progress bar for each request
+                    tracker.update(target_path, status_code)
+                    if 200 <= status_code < 300:
+                        results["stats"]["successful_responses"] += 1
+                        results["discovered_paths"].append({
+                            "path": entry,
+                            "url": target_path,
+                            "status_code": status_code,
+                            "content_length": len(response.content),
+                            "content_type": response.headers.get('Content-Type', 'Unknown')
+                        })
+                    elif 300 <= status_code < 400:
+                        redirect_url = response.headers.get('Location', '')
+                        results["stats"]["redirects"] += 1
+                        results["discovered_paths"].append({
+                            "path": entry,
+                            "url": target_path,
+                            "status_code": status_code,
+                            "redirect_to": redirect_url
+                        })
+                    elif 400 <= status_code < 500:
+                        if status_code == 403:
+                            results["discovered_paths"].append({
+                                "path": entry,
+                                "url": target_path,
+                                "status_code": status_code
+                            })
+                        results["stats"]["client_errors"] += 1
+                    elif 500 <= status_code < 600:
+                        results["stats"]["server_errors"] += 1
+                        results["discovered_paths"].append({
+                            "path": entry,
+                            "url": target_path,
+                            "status_code": status_code
+                        })
+                except requests.Timeout:
+                    tracker.update(target_path, 0)
+                    pass
+                except requests.RequestException as e:
+                    tracker.update(target_path, 0)
+                    pass
+                except KeyboardInterrupt:
+                    print(f"{Fore.YELLOW}[!] User interrupted scan{Style.RESET_ALL}")
+                    break
+            tracker.finish()
+        except Exception as e:
+            print(f"{Fore.RED}[!] Error during web content discovery: {str(e)}{Style.RESET_ALL}")
+            results["error"] = str(e)
+        
+        # Calculate scan duration and statistics
+        scan_duration = time.time() - start_time
+        results["scan_duration"] = scan_duration
+        
+        # Print summary
+        print(f"\n{Fore.GREEN}[+] Web content discovery completed in {scan_duration:.2f} seconds{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[+] Total requests: {results['stats']['total_requests']}{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[+] Found {len(results['discovered_paths'])} interesting paths{Style.RESET_ALL}")
+        
+        return results
+
+import time
